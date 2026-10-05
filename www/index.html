@@ -4,40 +4,102 @@
 <meta charset='UTF-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'>
 <meta name='theme-color' content='#0f172a'>
-<title>家谱关系图</title>
+<title>KinWeave 家谱关系图</title>
 <link rel='stylesheet' href='styles.css'>
 </head>
 <body>
 
 <header class='topbar'>
-  <div class='brand'>家谱关系图</div>
+  <div class='row-graph'>
+    <select id='graphSelect' class='graph-select'></select>
+    <button id='btnGraphMenu' class='btn icon' type='button' title='关系图管理'>☰</button>
+  </div>
   <div class='actions'>
-    <button id='btnAddPerson' class='btn primary' type='button'>+ 人物</button>
-    <button id='btnAddEdge' class='btn primary' type='button'>+ 关系</button>
-    <button id='btnFit' class='btn' type='button'>居中</button>
-    <button id='btnLayout' class='btn' type='button'>布局</button>
-    <button id='btnExport' class='btn' type='button'>导出</button>
-    <button id='btnImport' class='btn' type='button'>导入</button>
+    <button id='btnAddPerson' class='btn primary' type='button'>＋人物</button>
+    <button id='btnAddEdge' class='btn primary' type='button'>＋关系</button>
+    <button id='btnSearch' class='btn' type='button'>🔍</button>
+    <button id='btnUndo' class='btn' type='button' disabled>↩</button>
+    <button id='btnRedo' class='btn' type='button' disabled>↪</button>
+    <button id='btnMore' class='btn' type='button'>⋯</button>
   </div>
 </header>
 
 <div id='network' class='canvas'></div>
 
 <div id='empty' class='empty'>
-  <div class='empty-title'>还没有任何人物</div>
-  <div class='empty-sub'>点击右上角「+ 人物」创建第一个人，再用「+ 关系」连线并标注两人的关系</div>
-  <div class='empty-sub dim'>点按节点可编辑，点按连线可查看或删除关系</div>
+  <div class='empty-icon'>👥</div>
+  <div class='empty-title'>开始构建你的家谱</div>
+  <div class='empty-sub'>点击上方「＋人物」添加第一位成员</div>
+  <div class='empty-sub dim'>添加两人后，用「＋关系」连线并标注关系</div>
+</div>
+
+<div id='searchBar' class='search-bar hidden'>
+  <input id='searchInput' type='text' placeholder='输入姓名搜索并定位人物' autocomplete='off'>
+  <button id='searchClose' class='btn ghost' type='button'>✕</button>
+</div>
+
+<div id='statusBar' class='status-bar'>
+  <span id='statusName'>我的家谱</span>
+  <span class='status-sep'>·</span>
+  <span id='statusCount'>0 人 · 0 条关系</span>
 </div>
 
 <div id='toast' class='toast hidden'></div>
 
 <input id='fileInput' class='hidden-input' type='file' accept='application/json,.json'>
 
+<!-- 更多菜单 -->
+<div id='moreModal' class='modal hidden'>
+  <div class='sheet'>
+    <div class='sheet-title'>更多操作</div>
+    <div class='menu-grid'>
+      <button id='moreLayout' class='menu-item'>📐 切换布局</button>
+      <button id='moreLock' class='menu-item'>📌 锁定位置</button>
+      <button id='moreFit' class='menu-item'>🎯 居中显示</button>
+      <button id='moreExport' class='menu-item'>📤 导出数据</button>
+      <button id='moreImport' class='menu-item'>📥 导入数据</button>
+    </div>
+    <div class='row'>
+      <span class='spacer'></span>
+      <button id='moreClose' class='btn ghost' type='button'>关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 关系图管理 -->
+<div id='graphModal' class='modal hidden'>
+  <div class='sheet'>
+    <div class='sheet-title'>关系图管理</div>
+    <div class='list' id='graphList'></div>
+    <div class='row'>
+      <button id='graphNew' class='btn primary' type='button'>＋新建关系图</button>
+      <span class='spacer'></span>
+      <button id='graphClose' class='btn ghost' type='button'>关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 布局切换 -->
+<div id='layoutModal' class='modal hidden'>
+  <div class='sheet'>
+    <div class='sheet-title'>选择布局方式</div>
+    <div class='layout-grid' id='layoutGrid'></div>
+    <div class='row'>
+      <span class='spacer'></span>
+      <button id='layoutClose' class='btn ghost' type='button'>关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 人物编辑 -->
 <div id='personModal' class='modal hidden'>
   <div class='sheet'>
     <div class='sheet-title' id='personTitle'>添加人物</div>
     <label class='field'>姓名（可选）
       <input id='personName' type='text' placeholder='例如：张三' autocomplete='off'>
+    </label>
+    <label class='field'>性别（可选）
+      <select id='personGender'></select>
     </label>
     <label class='field'>简介（可选）
       <textarea id='personBio' rows='3' placeholder='例如：1950 年生，从事教育行业'></textarea>
@@ -51,17 +113,28 @@
   </div>
 </div>
 
+<!-- 添加关系 -->
 <div id='edgeModal' class='modal hidden'>
   <div class='sheet'>
     <div class='sheet-title'>添加关系</div>
-    <label class='field'>人物 A
-      <select id='edgeFrom'></select>
+    <label class='field'>人物 A（长辈 / 上级）
+      <input id='edgeFromSearch' type='text' placeholder='输入姓名筛选' autocomplete='off'>
+      <select id='edgeFrom' size='5'></select>
     </label>
-    <label class='field'>关系（显示在连线上）
+    <label class='field'>关系名称
       <input id='edgeLabel' type='text' placeholder='例如：父子 / 夫妻 / 兄弟' autocomplete='off'>
     </label>
-    <label class='field'>人物 B
-      <select id='edgeTo'></select>
+    <div class='chips' id='edgePresets'></div>
+    <label class='field'>人物 B（晚辈 / 下级）
+      <input id='edgeToSearch' type='text' placeholder='输入姓名筛选' autocomplete='off'>
+      <select id='edgeTo' size='5'></select>
+    </label>
+    <label class='field toggle-row'>
+      <span>关系方向</span>
+      <select id='edgeDirection' class='dir-select'>
+        <option value='directed'>A → B（有方向，箭头指向 B）</option>
+        <option value='undirected'>A — B（无方向，对等关系）</option>
+      </select>
     </label>
     <div class='row'>
       <span class='spacer'></span>
@@ -71,20 +144,38 @@
   </div>
 </div>
 
+<!-- 关系详情 -->
 <div id='edgeActionModal' class='modal hidden'>
   <div class='sheet'>
     <div class='sheet-title'>关系详情</div>
     <div id='edgeActionInfo' class='info'></div>
+    <label class='field'>修改关系名称
+      <input id='edgeActionLabel' type='text' placeholder='例如：父子 / 夫妻'>
+    </label>
+    <label class='field toggle-row'>
+      <span>关系方向</span>
+      <select id='edgeActionDirection' class='dir-select'>
+        <option value='directed'>有方向（箭头指向 B）</option>
+        <option value='undirected'>无方向（对等关系）</option>
+      </select>
+    </label>
     <div class='row'>
       <span class='spacer'></span>
       <button id='edgeActionCancel' class='btn ghost' type='button'>关闭</button>
       <button id='edgeActionDel' class='btn danger' type='button'>删除关系</button>
+      <button id='edgeActionSave' class='btn primary' type='button'>保存</button>
     </div>
   </div>
 </div>
 
 <script src='vendor/vis-network.min.js'></script>
 <script src='core.js'></script>
+<script src='graph.js'></script>
+<script src='person.js'></script>
+<script src='edge.js'></script>
+<script src='history.js'></script>
+<script src='render.js'></script>
+<script src='ui.js'></script>
 <script src='app.js'></script>
 </body>
 </html>
