@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang='zh-CN'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'>
+<meta name='theme-color' content='#0f172a'>
+<title>家谱关系图</title>
+<link rel='stylesheet' href='styles.css'>
+</head>
+<body>
+
+<header class='topbar'>
+  <div class='brand'>家谱关系图</div>
+  <div class='actions'>
+    <button id='btnAddPerson' class='btn primary' type='button'>+ 人物</button>
+    <button id='btnAddEdge' class='btn primary' type='button'>+ 关系</button>
+    <button id='btnFit' class='btn' type='button'>居中</button>
+    <button id='btnLayout' class='btn' type='button'>布局</button>
+    <button id='btnExport' class='btn' type='button'>导出</button>
+    <button id='btnImport' class='btn' type='button'>导入</button>
+  </div>
+</header>
+
+<div id='network' class='canvas'></div>
+
+<div id='empty' class='empty'>
+  <div class='empty-title'>还没有任何人物</div>
+  <div class='empty-sub'>点击右上角「+ 人物」创建第一个人，再用「+ 关系」连线并标注两人的关系</div>
+  <div class='empty-sub dim'>点按节点可编辑，点按连线可查看或删除关系</div>
+</div>
+
+<div id='toast' class='toast hidden'></div>
+
+<input id='fileInput' class='hidden-input' type='file' accept='application/json,.json'>
+
+<div id='personModal' class='modal hidden'>
+  <div class='sheet'>
+    <div class='sheet-title' id='personTitle'>添加人物</div>
+    <label class='field'>姓名（可选）
+      <input id='personName' type='text' placeholder='例如：张三' autocomplete='off'>
+    </label>
+    <label class='field'>简介（可选）
+      <textarea id='personBio' rows='3' placeholder='例如：1950 年生，从事教育行业'></textarea>
+    </label>
+    <div class='row'>
+      <button id='personDelete' class='btn danger hidden' type='button'>删除</button>
+      <span class='spacer'></span>
+      <button id='personCancel' class='btn ghost' type='button'>取消</button>
+      <button id='personSave' class='btn primary' type='button'>保存</button>
+    </div>
+  </div>
+</div>
+
+<div id='edgeModal' class='modal hidden'>
+  <div class='sheet'>
+    <div class='sheet-title'>添加关系</div>
+    <label class='field'>人物 A
+      <select id='edgeFrom'></select>
+    </label>
+    <label class='field'>关系（显示在连线上）
+      <input id='edgeLabel' type='text' placeholder='例如：父子 / 夫妻 / 兄弟' autocomplete='off'>
+    </label>
+    <label class='field'>人物 B
+      <select id='edgeTo'></select>
+    </label>
+    <div class='row'>
+      <span class='spacer'></span>
+      <button id='edgeCancel' class='btn ghost' type='button'>取消</button>
+      <button id='edgeSave' class='btn primary' type='button'>保存</button>
+    </div>
+  </div>
+</div>
+
+<div id='edgeActionModal' class='modal hidden'>
+  <div class='sheet'>
+    <div class='sheet-title'>关系详情</div>
+    <div id='edgeActionInfo' class='info'></div>
+    <div class='row'>
+      <span class='spacer'></span>
+      <button id='edgeActionCancel' class='btn ghost' type='button'>关闭</button>
+      <button id='edgeActionDel' class='btn danger' type='button'>删除关系</button>
+    </div>
+  </div>
+</div>
+
+<script src='vendor/vis-network.min.js'></script>
+<script src='core.js'></script>
+<script src='app.js'></script>
+</body>
+</html>

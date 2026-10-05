@@ -1,0 +1,10 @@
+{
+  "appId": "com.example.familytree",
+  "appName": "FamilyTree",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#0f172a"
+  }
+}
