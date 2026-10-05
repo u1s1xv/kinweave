@@ -133,22 +133,32 @@
     graph.positions = out;
   }
 
-  /* 布局切换 —— 修复：每次切换彻底清除节点坐标与固定状态 */
+  /* 布局切换 —— 修复：每次切换彻底清除节点坐标与固定状态，并强制重新稳定化 */
   function applyLayout(store, key) {
     currentLayout = key;
     var graph = Graph.getCurrent(store);
     /* 清除所有旧坐标缓存，防止树状布局的层级坐标污染网状布局 */
     graph.positions = {};
     locked = false;
-    /* 清除所有节点的固定状态 */
+    /* 清除所有节点的固定状态和坐标 */
     if (nodesDS) {
       nodesDS.get().forEach(function (n) {
         nodesDS.update({ id: n.id, fixed: false, x: undefined, y: undefined });
       });
     }
     if (network) {
-      network.setOptions(networkOptions());
-      setTimeout(function () { network.fit({ animation: { duration: 400 } }); }, 120);
+      var opts = networkOptions();
+      /* 网状布局需要强制启用物理引擎并触发稳定化 */
+      if (key === 'force') {
+        opts.physics = { enabled: true, stabilization: { enabled: true, iterations: 400 },
+          barnesHut: { gravitationalConstant: -6000, centralGravity: 0.28, springLength: 140, springConstant: 0.05, damping: 0.4 } };
+      }
+      network.setOptions(opts);
+      if (key === 'force') {
+        /* 强制触发稳定化，让节点从零开始散开 */
+        network.stabilize(400);
+      }
+      setTimeout(function () { network.fit({ animation: { duration: 400 } }); }, 150);
     }
   }
 
